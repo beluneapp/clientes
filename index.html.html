@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>Belune — Cliente</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --p:#6D28D9;--p2:#8B5CF6;--p3:#EDE9FE;--p4:#F5F3FF;
+  --dk:#111827;--mid:#374151;--soft:#6B7280;--muted:#9CA3AF;
+  --line:#F3F4F6;--bg:#F7F7F9;--w:#FFF;
+  --gold:#F59E0B;--red:#EF4444;--green:#10B981;
+  --r:16px;--r2:12px;--sh:0 1px 12px rgba(0,0,0,.08);--shp:0 6px 24px rgba(109,40,217,.2);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg)}
+body{font-family:'Nunito Sans',sans-serif;overflow:hidden}
+.screen{width:100%;height:100dvh;display:flex;flex-direction:column;position:relative;max-width:600px;margin:0 auto;background:var(--bg);overflow:hidden}
+@media(min-width:601px){.screen{box-shadow:0 0 0 1px var(--line)}}
+.pg{display:none;flex-direction:column;height:100%;animation:pgIn .2s ease;position:absolute;inset:0}
+.pg.on{display:flex}
+@keyframes pgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.scroll{flex:1;overflow-y:auto}
+.scroll::-webkit-scrollbar{display:none}
+
+/* DRAWER */
+.dov{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(3px)}
+.dov.on{opacity:1;pointer-events:all}
+.drw{position:absolute;top:0;left:-275px;bottom:0;width:270px;background:var(--w);z-index:201;transition:left .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;border-radius:0 22px 22px 0;box-shadow:8px 0 40px rgba(0,0,0,.2)}
+.drw.on{left:0}
+.drw-head{background:linear-gradient(160deg,#3B0764,#6D28D9);padding:calc(env(safe-area-inset-top)+20px) 18px 18px;border-radius:0 22px 0 0}
+.drw-head img{width:54px;height:54px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.35);margin-bottom:10px;display:block}
+.drw-head h3{color:#fff;font-size:16px;font-weight:900}
+.drw-head p{color:rgba(255,255,255,.65);font-size:12px;font-weight:600;margin-top:2px}
+.drw-plan{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.18);color:#fff;border-radius:50px;padding:4px 12px;font-size:11px;font-weight:800;margin-top:8px}
+.drw-body{flex:1;overflow-y:auto;padding:10px 0}
+.drw-body::-webkit-scrollbar{display:none}
+.d-sec{padding:8px 18px 4px;font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.d-it{display:flex;align-items:center;gap:12px;padding:13px 18px;cursor:pointer;transition:background .15s}
+.d-it:active,.d-it.on{background:var(--p3)}
+.d-it.on .d-lbl{color:var(--p);font-weight:800}
+.d-it.on .d-ico{background:var(--p);color:#fff}
+.d-ico{width:36px;height:36px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.d-lbl{font-size:14px;font-weight:700;color:var(--mid)}
+.drw-foot{padding:14px 18px;border-top:1px solid var(--line)}
+.d-mode{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--dk);border-radius:var(--r2);cursor:pointer}
+.d-mode span{color:#fff;font-size:14px;font-weight:800;flex:1}
+
+/* BOTTOM NAV */
+.bnav{display:flex;background:var(--w);border-top:1px solid var(--line);padding:8px 0 calc(env(safe-area-inset-bottom)+10px);flex-shrink:0;z-index:10}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0}
+.bni svg{width:22px;height:22px;stroke:var(--muted);fill:none;stroke-width:1.8;transition:stroke .18s}
+.bni span{font-size:10px;font-weight:700;color:var(--muted);transition:color .18s}
+.bni.on svg{stroke:var(--p)}
+.bni.on span{color:var(--p)}
+
+/* HEADER */
+.ghdr{background:linear-gradient(160deg,#3B0764,#6D28D9);flex-shrink:0;padding-top:calc(env(safe-area-inset-top)+16px)}
+
+/* BUTTONS */
+.btn{display:block;width:100%;padding:15px;background:var(--p);color:#fff;border:none;border-radius:var(--r2);font-family:'Nunito Sans',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:transform .15s;box-shadow:var(--shp)}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--p);border:2px solid var(--p);box-shadow:none}
+.btn.sm{padding:10px 16px;font-size:13px;width:auto;border-radius:10px;box-shadow:none}
+.btn.green{background:var(--green);box-shadow:0 4px 14px rgba(16,185,129,.3)}
+
+/* SEARCH */
+.sbar{display:flex;align-items:center;gap:10px;background:var(--w);border-radius:50px;padding:13px 18px;box-shadow:0 6px 24px rgba(109,40,217,.18)}
+.sbar input{flex:1;border:none;outline:none;font-family:'Nunito Sans',sans-serif;font-size:14px;font-weight:600;color:var(--dk)}
+.sbar input::placeholder{color:#aaa}
+.sbar svg{width:18px;height:18px;stroke:#aaa;fill:none;flex-shrink:0}
+
+/* CATEGORIES — ICON GRID */
+.cats{display:flex;gap:10px;overflow-x:auto;padding:0 4px 4px}
+.cats::-webkit-scrollbar{display:none}
+.cat{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0}
+.cat-ico{width:58px;height:58px;border-radius:18px;background:var(--w);display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);transition:all .18s;border:2px solid transparent}
+.cat-ico.on,.cat-ico:active{border-color:var(--p);box-shadow:0 4px 16px rgba(109,40,217,.25);transform:scale(.95)}
+.cat-ico svg{width:28px;height:28px}
+.cat span{font-size:11px;font-weight:700;color:var(--mid)}
+
+/* BELUNE SVG ICONS — reusable */
+.b-ico{display:flex;align-items:center;justify-content:center}
+
+/* ── PROFISSIONAL CARD ── */
+.pcards{display:flex;flex-direction:column;gap:10px;padding:0 16px}
+.pcard{background:var(--w);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);cursor:pointer;display:flex;align-items:stretch;transition:transform .18s;min-height:100px}
+.pcard:active{transform:scale(.98)}
+.pcard-img{width:92px;flex-shrink:0;overflow:hidden;position:relative}
+.pcard-img img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.pcard-img-fallback{width:100%;height:100%;background:linear-gradient(135deg,var(--p3),var(--p));display:flex;align-items:center;justify-content:center;font-size:32px}
+.pcard-b{padding:12px 12px 12px;flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+.pcard-b h4{font-size:15px;font-weight:800;color:var(--dk);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard-b .sub{font-size:12px;color:var(--soft);margin-bottom:6px}
+.pcard-mid{display:flex;align-items:center;gap:6px}
+.star-b{display:flex;align-items:center;gap:3px;background:#FEF3C7;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:800;color:#92400E}
+.star-b::before{content:'★';color:var(--gold)}
+/* SPEC BADGES — Belune brand icons */
+.spec-row{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;align-items:center}
+.spec-tag{display:inline-flex;align-items:center;gap:4px;border-radius:8px;padding:4px 8px;font-size:10px;font-weight:800}
+.spec-tag svg{width:12px;height:12px;flex-shrink:0}
+.spec-tag.elderly{background:#FFF7E6;color:#92400E}
+.spec-tag.elderly svg{fill:#D97706}
+.spec-tag.neuro{background:var(--p3);color:var(--p)}
+.spec-tag.neuro svg{fill:var(--p)}
+.spec-tag.atypical{background:#FCE7F3;color:#9D174D}
+.spec-tag.atypical svg{fill:#DB2777}
+.spec-tag.verified{background:#D1FAE5;color:#065F46}
+.spec-tag.verified svg{fill:#059669;stroke:none}
+.fav{width:34px;height:34px;border-radius:50%;background:var(--p3);display:flex;align-items:center;justify-content:center;cursor:pointer;margin:12px 10px 12px 0;flex-shrink:0;align-self:center;transition:all .18s}
+.fav.on{background:#FEE2E2}
+.fav svg{width:16px;height:16px}
+.fav:not(.on) svg{stroke:var(--p);fill:none;stroke-width:2}
+.fav.on svg{fill:var(--red);stroke:none}
+
+/* HORIZONTAL SCROLL */
+.hscroll{display:flex;gap:12px;overflow-x:auto;padding:0 16px 6px}
+.hscroll::-webkit-scrollbar{display:none}
+.hcard{width:150px;flex-shrink:0;background:var(--w);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);cursor:pointer;transition:transform .18s}
+.hcard:active{transform:scale(.96)}
+.hcard-img{width:100%;height:94px;overflow:hidden;position:relative}
+.hcard-img img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.hcard-img-fb{width:100%;height:100%;background:linear-gradient(135deg,var(--p3),var(--p2));display:flex;align-items:center;justify-content:center;font-size:28px}
+.hcard-b{padding:9px 10px}
+.hcard-b h4{font-size:13px;font-weight:800;color:var(--dk);margin-bottom:2px}
+.hcard-b p{font-size:11px;color:var(--soft)}
+
+/* PROMO */
+.promo{margin:0 16px 4px;border-radius:var(--r);background:linear-gradient(135deg,#4C1D95,#6D28D9);padding:17px 18px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;box-shadow:var(--shp)}
+.promo h3{color:#fff;font-size:16px;font-weight:900;margin-bottom:3px}
+.promo p{color:rgba(255,255,255,.75);font-size:12px;font-weight:600}
+.promo-pill{display:inline-block;background:rgba(255,255,255,.18);color:#fff;border-radius:50px;padding:5px 13px;font-size:11px;font-weight:800;margin-top:8px}
+
+/* SECTION */
+.sec{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px}
+.sec h3{font-size:17px;font-weight:900;color:var(--dk)}
+.sec a{font-size:13px;font-weight:700;color:var(--p);cursor:pointer}
+
+/* LEGEND */
+.legend{display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto}
+.legend::-webkit-scrollbar{display:none}
+.leg-item{display:inline-flex;align-items:center;gap:5px;background:var(--w);border-radius:50px;padding:5px 11px;font-size:11px;font-weight:700;color:var(--soft);white-space:nowrap;box-shadow:var(--sh);flex-shrink:0}
+.leg-item svg{width:14px;height:14px;flex-shrink:0}
+
+/* PILLS */
+.pill{display:inline-flex;align-items:center;border-radius:50px;padding:4px 10px;font-size:11px;font-weight:800}
+.pill.g{background:#D1FAE5;color:#065F46}
+.pill.am{background:#FEF3C7;color:#92400E}
+.pill.bl{background:#DBEAFE;color:#1E40AF}
+.pill.pu{background:var(--p3);color:var(--p)}
+.pill.gr{background:var(--line);color:var(--soft)}
+
+/* PROF PROFILE */
+.prof-cov{position:relative;flex-shrink:0}
+.prof-cov .cimg{width:100%;height:220px;object-fit:cover;object-position:top center;display:block}
+.prof-cov-fb{width:100%;height:220px;background:linear-gradient(135deg,var(--p3),var(--p));display:flex;align-items:center;justify-content:center;font-size:64px}
+.prof-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.6),transparent 50%)}
+.prof-back{position:absolute;top:calc(env(safe-area-inset-top)+12px);left:14px;width:38px;height:38px;background:rgba(0,0,0,.35);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px)}
+.prof-back svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.5}
+.prof-fav-btn{position:absolute;top:calc(env(safe-area-inset-top)+12px);right:14px;width:38px;height:38px;background:rgba(0,0,0,.35);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px)}
+.prof-fav-btn svg{width:18px;height:18px}
+.prof-name{position:absolute;bottom:14px;left:16px;right:16px}
+.prof-name h2{color:#fff;font-size:22px;font-weight:900;text-shadow:0 2px 8px rgba(0,0,0,.4)}
+.prof-name p{color:rgba(255,255,255,.85);font-size:13px;font-weight:600;margin-top:2px}
+.prof-body{padding:14px 16px;background:var(--bg)}
+.prof-stats{display:flex;background:var(--w);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);margin-bottom:13px}
+.pstat{flex:1;padding:13px;text-align:center;position:relative}
+.pstat+.pstat::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:1px;background:var(--line)}
+.pstat .sv{font-size:19px;font-weight:900;color:var(--dk)}
+.pstat .sl{font-size:11px;color:var(--soft);font-weight:600;margin-top:2px}
+.svc-list{background:var(--w);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);margin-bottom:13px}
+.svc-row{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border-bottom:1px solid var(--line);cursor:pointer}
+.svc-row:last-child{border:none}
+.svc-row.on{background:var(--p3)}
+.svc-row h4{font-size:14px;font-weight:700;color:var(--dk)}
+.svc-row p{font-size:12px;color:var(--soft);margin-top:2px}
+.svc-price{font-size:16px;font-weight:900;color:var(--p);flex-shrink:0}
+.svc-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;margin-left:10px;flex-shrink:0;transition:all .18s}
+.svc-radio.on{border-color:var(--p);background:var(--p)}
+.svc-radio.on::after{content:'';width:8px;height:8px;border-radius:50%;background:#fff}
+
+/* REVIEWS */
+.rev{background:var(--w);border-radius:var(--r);padding:15px;box-shadow:var(--sh);margin-bottom:10px}
+.rev-h{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.rev-h img{width:38px;height:38px;border-radius:50%;object-fit:cover}
+.rev-h h4{font-size:14px;font-weight:800;color:var(--dk)}
+.rev-h p{font-size:11px;color:var(--soft);margin-top:2px}
+.rev-st{margin-left:auto;color:var(--gold);font-size:13px}
+.rev-st .off{color:var(--line)}
+.rev p{font-size:13px;color:var(--mid);line-height:1.5}
+.rev-dt{font-size:11px;color:var(--muted);margin-top:7px;font-weight:600}
+
+/* BOOKING */
+.book-hdr{background:linear-gradient(160deg,#3B0764,#6D28D9);padding:calc(env(safe-area-inset-top)+14px) 16px 18px;flex-shrink:0}
+.book-hdr .back-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.book-hdr .back-row svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;cursor:pointer}
+.book-hdr h2{color:#fff;font-size:18px;font-weight:900}
+.book-pro{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.15);border-radius:var(--r2);padding:12px}
+.book-pro img{width:46px;height:46px;border-radius:12px;object-fit:cover;object-position:top}
+.book-pro .bp-fb{width:46px;height:46px;border-radius:12px;background:var(--p2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.book-pro h4{color:#fff;font-size:15px;font-weight:800}
+.book-pro p{color:rgba(255,255,255,.7);font-size:12px}
+.book-sec{background:var(--w);border-radius:var(--r);margin:10px 16px 0;box-shadow:var(--sh);overflow:hidden}
+.book-sec-hdr{padding:13px 16px 8px;font-size:12px;font-weight:800;color:var(--soft);text-transform:uppercase;letter-spacing:.5px}
+.dstrip{display:flex;gap:8px;overflow-x:auto;padding:0 16px 14px}
+.dstrip::-webkit-scrollbar{display:none}
+.dp{min-width:50px;height:66px;border-radius:14px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;gap:2px;flex-shrink:0}
+.dp.on{background:var(--p);box-shadow:0 4px 14px rgba(109,40,217,.35)}
+.dp .dn{font-size:21px;font-weight:900;color:var(--mid)}
+.dp .dw{font-size:10px;font-weight:700;color:var(--muted)}
+.dp.on .dn,.dp.on .dw{color:#fff}
+.time-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px 14px}
+.tbtn{height:44px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--mid);cursor:pointer;transition:all .18s}
+.tbtn.on{background:var(--p);color:#fff;box-shadow:0 4px 14px rgba(109,40,217,.3)}
+.tbtn.busy{opacity:.4;pointer-events:none}
+.pay-opts{display:flex;flex-direction:column;gap:8px;padding:0 16px 14px}
+.pay-row{display:flex;align-items:center;gap:12px;background:var(--bg);border:1.5px solid transparent;border-radius:var(--r2);padding:12px 14px;cursor:pointer;transition:all .18s}
+.pay-row.on{background:var(--p3);border-color:var(--p)}
+.pay-ico{width:36px;height:36px;border-radius:10px;background:var(--w);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 4px rgba(0,0,0,.1);flex-shrink:0}
+.pay-row h4{font-size:14px;font-weight:700;color:var(--dk);flex:1}
+
+/* CONFIRM */
+.confirm-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 22px;text-align:center;flex:1}
+.confirm-ico{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--p2));display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:18px;box-shadow:var(--shp)}
+.confirm-card{background:var(--w);border-radius:var(--r);padding:16px;width:100%;box-shadow:var(--sh);margin-bottom:18px;text-align:left}
+.crow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.crow:last-child{border:none}
+.crow span{font-size:13px;color:var(--soft)}
+.crow strong{font-size:14px;font-weight:800;color:var(--dk)}
+
+/* AGENDA */
+.apt-card{background:var(--w);border-radius:var(--r);margin:0 16px 10px;overflow:hidden;box-shadow:var(--sh);cursor:pointer}
+.apt-top{display:flex;align-items:center;gap:12px;padding:13px 14px}
+.apt-top img{width:52px;height:52px;border-radius:12px;object-fit:cover;object-position:top;flex-shrink:0}
+.apt-top .apt-fb{width:52px;height:52px;border-radius:12px;background:var(--p3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.apt-info h4{font-size:15px;font-weight:800;color:var(--dk)}
+.apt-info p{font-size:12px;color:var(--soft);margin-top:2px}
+.apt-meta{margin-left:auto;text-align:right;flex-shrink:0}
+.apt-time{font-size:13px;font-weight:800;color:var(--p)}
+.apt-date{font-size:11px;color:var(--soft);margin-top:2px}
+.apt-footer{display:flex;border-top:1px solid var(--line)}
+.apt-act{flex:1;padding:11px;text-align:center;font-size:13px;font-weight:800;color:var(--p);cursor:pointer}
+.apt-act+.apt-act{border-left:1px solid var(--line)}
+.apt-act.red{color:var(--red)}
+
+/* RATE */
+.rate-card{background:linear-gradient(135deg,#3B0764,#6D28D9);border-radius:var(--r);margin:0 16px 12px;padding:17px}
+.rate-card h3{color:#fff;font-size:15px;font-weight:800;margin-bottom:4px}
+.rate-card p{color:rgba(255,255,255,.65);font-size:12px;margin-bottom:12px}
+.rs{display:flex;gap:8px}
+.rs span{font-size:32px;cursor:pointer;filter:grayscale(1) opacity(.35);transition:transform .18s}
+.rs span.on{filter:none;transform:scale(1.1)}
+
+/* TABS */
+.tabs{display:flex;background:var(--w);border-bottom:1px solid var(--line);flex-shrink:0}
+.tab{flex:1;padding:12px;text-align:center;font-size:13px;font-weight:800;color:var(--soft);border-bottom:2.5px solid transparent;cursor:pointer;transition:all .18s}
+.tab.on{color:var(--p);border-bottom-color:var(--p)}
+
+/* TOGGLE */
+.tgl{width:44px;height:25px;border-radius:50px;background:var(--line);position:relative;transition:background .25s;flex-shrink:0;cursor:pointer}
+.tgl::after{content:'';width:19px;height:19px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:left .25s;box-shadow:0 2px 5px rgba(0,0,0,.2)}
+.tgl.on{background:var(--p)}
+.tgl.on::after{left:22px}
+
+/* PROFILE CLIENT */
+.cli-head{background:linear-gradient(160deg,#3B0764,#6D28D9);padding:calc(env(safe-area-inset-top)+16px) 16px 20px;flex-shrink:0}
+.prow{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line)}
+.prow:last-child{border:none}
+.prow-left h4{font-size:14px;font-weight:700;color:var(--dk)}
+.prow-left p{font-size:12px;color:var(--soft);margin-top:2px}
+
+/* PLAN */
+.plan-f{background:var(--w);border-radius:var(--r);margin:0 16px 10px;padding:18px;box-shadow:var(--sh);border:2px solid var(--line)}
+.plan-p{background:linear-gradient(135deg,#4C1D95,#6D28D9);border-radius:var(--r);margin:0 16px 12px;padding:18px}
+.plan-f h3{font-size:18px;font-weight:900;color:var(--dk);margin-bottom:4px}
+.plan-f .pr{font-size:26px;font-weight:900;color:var(--mid);margin-bottom:12px}
+.plan-p h3{font-size:18px;font-weight:900;color:#fff;margin-bottom:4px}
+.plan-p .pr{font-size:26px;font-weight:900;color:#fff;margin-bottom:12px}
+.pfeat{display:flex;align-items:center;gap:7px;margin-bottom:7px;font-size:13px}
+.pfeat::before{content:'✓';font-weight:900}
+.pfeat.f{color:var(--mid)}
+.pfeat.f::before{color:var(--p)}
+.pfeat.p{color:rgba(255,255,255,.9)}
+.pfeat.p::before{color:rgba(255,255,255,.7)}
+
+/* CHAT */
+.chat-hdr{background:linear-gradient(160deg,#3B0764,#6D28D9);padding:calc(env(safe-area-inset-top)+12px) 16px 16px;flex-shrink:0}
+.chat-hdr-inner{display:flex;align-items:center;gap:12px}
+.chat-back{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.chat-back svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.5}
+.chat-area{flex:1;overflow-y:auto;padding:14px;background:var(--bg)}
+.chat-area::-webkit-scrollbar{display:none}
+.bubble{max-width:72%;border-radius:18px;padding:10px 14px;font-size:13px;line-height:1.5;margin-bottom:6px;font-weight:600}
+.bubble.s{background:var(--p);color:#fff;margin-left:auto;border-bottom-right-radius:4px}
+.bubble.r{background:var(--w);color:var(--dk);border-bottom-left-radius:4px;box-shadow:var(--sh)}
+.btime{font-size:10px;color:var(--soft);margin-bottom:10px;font-weight:700}
+.btime.r{text-align:right}
+.chat-in{display:flex;gap:8px;padding:10px 14px calc(env(safe-area-inset-bottom)+10px);background:var(--w);border-top:1px solid var(--line);flex-shrink:0}
+.chat-in input{flex:1;background:var(--bg);border:none;border-radius:50px;padding:11px 16px;font-family:'Nunito Sans',sans-serif;font-size:14px;font-weight:600;color:var(--dk);outline:none}
+.chat-send{width:44px;height:44px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;flex-shrink:0}
+.chat-send svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.5}
+
+/* SUBCAT SHEET */
+.subcat-bg{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:180;display:none;align-items:flex-end;backdrop-filter:blur(4px)}
+.subcat-bg.on{display:flex}
+.subcat-sheet{background:var(--w);border-radius:22px 22px 0 0;padding:0 0 calc(env(safe-area-inset-bottom)+16px);width:100%;animation:su .25s ease;max-height:78vh;display:flex;flex-direction:column}
+.subcat-hdr{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.subcat-hdr h3{font-size:18px;font-weight:900;color:var(--dk)}
+.subcat-close{width:32px;height:32px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--soft)}
+.subcat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px;overflow-y:auto}
+.subcat-grid::-webkit-scrollbar{display:none}
+.si{background:var(--bg);border-radius:var(--r);padding:16px 14px 13px;cursor:pointer;transition:all .18s;text-align:center;border:1.5px solid transparent;position:relative}
+.si:active,.si.on{background:var(--p3);border-color:var(--p)}
+.si-ico{width:52px;height:52px;border-radius:16px;background:var(--w);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:var(--sh)}
+.si-ico svg{width:28px;height:28px}
+.si h4{font-size:14px;font-weight:800;color:var(--dk);margin-bottom:3px}
+.si p{font-size:11px;color:var(--soft);line-height:1.3}
+
+/* MODAL */
+.modb{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:150;display:none;align-items:flex-end;backdrop-filter:blur(4px)}
+.modb.on{display:flex}
+.mods{background:var(--w);border-radius:22px 22px 0 0;padding:20px;width:100%;animation:su .25s ease}
+@keyframes su{from{transform:translateY(100%)}to{transform:none}}
+.modh{width:36px;height:4px;background:var(--line);border-radius:4px;margin:0 auto 15px}
+
+/* TOAST */
+.toast{position:absolute;bottom:90px;left:16px;right:16px;background:rgba(17,17,17,.93);color:#fff;border-radius:13px;padding:12px 16px;font-size:13px;font-weight:700;text-align:center;display:none;z-index:999;animation:ti .25s cubic-bezier(.34,1.56,.64,1)}
+@keyframes ti{from{opacity:0;transform:translateY(12px) scale(.95)}to{opacity:1;transform:none}}
+.hbtn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;flex-shrink:0;border:1.5px solid rgba(255,255,255,.25)}
+.hbtn span{display:block;width:15px;height:2px;background:#fff;border-radius:2px}
+.hbtn-d{width:36px;height:36px;border-radius:50%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;flex-shrink:0}
+.hbtn-d span{display:block;width:15px;height:2px;background:var(--dk);border-radius:2px}
+.logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--p);text-align:center;padding:14px 0 8px}
+.logo.w{color:#fff}
+.fld{padding:0 16px;margin-bottom:11px}
+.fld label{font-size:11px;font-weight:800;color:var(--soft);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.fld input{width:100%;background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r2);padding:12px 14px;font-family:'Nunito Sans',sans-serif;font-size:14px;font-weight:600;color:var(--dk);outline:none}
+.fld input:focus{border-color:var(--p);background:var(--w)}
+*::-webkit-scrollbar{display:none}
+img{background:var(--p3)}
+</style>
+</head>
+<body>
+<div class="screen" id="sc">
+
+<!-- BELUNE SVG DEFS (reusable icons) -->
+<svg style="display:none" id="svgdefs">
+  <defs>
+    <!-- Idoso / Elderly -->
+    <symbol id="ico-elderly" viewBox="0 0 24 24">
+      <circle cx="12" cy="5" r="2.5" fill="currentColor"/>
+      <path d="M9 10h6l1 4H8l1-4z" fill="currentColor"/>
+      <path d="M9 14l-2 6M15 14l2 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M7 18l-2 2M17 18l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M9 16l1-2M15 16l-1-2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    </symbol>
+    <!-- Neurodivergente / Neuro -->
+    <symbol id="ico-neuro" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="10" rx="7" ry="6" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M8 8c1-2 5-2 6 0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M9 12c1 1.5 5 1.5 6 0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <circle cx="9.5" cy="9.5" r="1" fill="currentColor"/>
+      <circle cx="14.5" cy="9.5" r="1" fill="currentColor"/>
+      <path d="M10 16v2M14 16v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M9 18h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <!-- Mãe Atípica -->
+    <symbol id="ico-atypical" viewBox="0 0 24 24">
+      <circle cx="12" cy="5" r="2.5" fill="currentColor"/>
+      <path d="M8 10h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M10 10v5l-2 4M14 10v5l2 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M10 13l2 2 2-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <circle cx="16" cy="8" r="3" fill="currentColor" opacity=".35"/>
+      <path d="M15 7l1 1 2-2" stroke="white" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <!-- Verificada -->
+    <symbol id="ico-verified" viewBox="0 0 24 24">
+      <path d="M12 2l2.5 3 3.5-.5 1 3.5 3 1.5-1 3.5 2 3-2 3 1 3.5-3 1.5-1 3.5-3.5-.5L12 22l-2.5-3-3.5.5-1-3.5L2 14.5l1-3.5-2-3 2-3-1-3.5 3-1.5 1-3.5 3.5.5L12 2z" fill="currentColor"/>
+      <path d="M8.5 12l2.5 2.5 4.5-4.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </symbol>
+    <!-- Category: Cabelo -->
+    <symbol id="ico-cabelo" viewBox="0 0 24 24">
+      <path d="M8 3c0 0 2 2 2 6s-2 4-2 8c0 2 1 4 4 4s4-2 4-4c0-4-2-4-2-8s2-6 2-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M7 10c1.5-1 4-1 5.5 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M9 15c1-0.8 3-0.8 4 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <!-- Category: Unhas -->
+    <symbol id="ico-unhas" viewBox="0 0 24 24">
+      <rect x="6" y="10" width="3" height="9" rx="1.5" fill="currentColor" opacity=".4"/>
+      <rect x="10.5" y="7" width="3" height="12" rx="1.5" fill="currentColor"/>
+      <rect x="15" y="9" width="3" height="10" rx="1.5" fill="currentColor" opacity=".6"/>
+      <rect x="6" y="6" width="3" height="3.5" rx="1.5" fill="currentColor" opacity=".25"/>
+      <rect x="10.5" y="3.5" width="3" height="3" rx="1.5" fill="currentColor" opacity=".4"/>
+      <rect x="15" y="5" width="3" height="3.5" rx="1.5" fill="currentColor" opacity=".3"/>
+    </symbol>
+    <!-- Category: Maquiagem -->
+    <symbol id="ico-makeup" viewBox="0 0 24 24">
+      <path d="M7 17l3-10 2 3 2-3 3 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M9 14h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <circle cx="12" cy="6" r="2" fill="currentColor"/>
+    </symbol>
+    <!-- Category: Massagem -->
+    <symbol id="ico-massage" viewBox="0 0 24 24">
+      <path d="M5 8c0 0 2-1 4 0s3 2 3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M5 12c0 0 2-1 4 0s5 3 7 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M5 16c0 0 3-1 5 0s5 2 7 1" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <circle cx="18" cy="7" r="2.5" fill="currentColor" opacity=".5"/>
+    </symbol>
+    <!-- Category: Barba -->
+    <symbol id="ico-barba" viewBox="0 0 24 24">
+      <path d="M6 4l1 8c0 4 2 6 5 6s5-2 5-6l1-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M9 14c0 0 1 2 3 2s3-2 3-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M4 4h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <circle cx="9.5" cy="10" r="1" fill="currentColor"/>
+      <circle cx="14.5" cy="10" r="1" fill="currentColor"/>
+    </symbol>
+    <!-- Category: Cílios -->
+    <symbol id="ico-cilios" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="13" rx="7" ry="4" stroke="currentColor" stroke-width="2" fill="none"/>
+      <circle cx="12" cy="13" r="2" fill="currentColor"/>
+      <path d="M7 9l-1-3M9.5 8l-0.5-3.5M12 7.5V4M14.5 8l0.5-3.5M17 9l1-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <!-- Category: Podologia -->
+    <symbol id="ico-podo" viewBox="0 0 24 24">
+      <path d="M8 3c-1 0-2 1-2 3v5c0 2 1 3 2 3h1l1 7h4l1-7h1c1 0 2-1 2-3V6c0-2-1-3-2-3H8z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+      <circle cx="9.5" cy="6.5" r=".8" fill="currentColor"/>
+      <circle cx="12" cy="6" r=".8" fill="currentColor"/>
+      <circle cx="14.5" cy="6.5" r=".8" fill="currentColor"/>
+    </symbol>
+    <!-- Category: Depilação -->
+    <symbol id="ico-depil" viewBox="0 0 24 24">
+      <rect x="5" y="4" width="14" height="6" rx="2" fill="currentColor" opacity=".3"/>
+      <rect x="5" y="4" width="14" height="6" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M8 10l-3 8h14l-3-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M9 14h6M10 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <!-- Subcat icons -->
+    <symbol id="ico-corte" viewBox="0 0 24 24">
+      <circle cx="6" cy="6" r="3" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M8.5 8.5l7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M8.5 15.5l7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M8.5 15.5l3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".4"/>
+    </symbol>
+    <symbol id="ico-penteado" viewBox="0 0 24 24">
+      <path d="M12 3c-4 0-6 3-6 6 0 5 3 7 3 10h6c0-3 3-5 3-10 0-3-2-6-6-6z" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M9 12c1-1 3-1 4 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M8 8c1-1 5-1 6 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="ico-escova" viewBox="0 0 24 24">
+      <rect x="9" y="3" width="6" height="10" rx="3" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M12 13v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M9 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="ico-hidrat" viewBox="0 0 24 24">
+      <path d="M12 3l6 8c0 4-2.5 7-6 7s-6-3-6-7l6-8z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+      <path d="M9 14c.5 1.5 2 2.5 3 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" opacity=".5"/>
+    </symbol>
+    <symbol id="ico-quimica" viewBox="0 0 24 24">
+      <path d="M9 3v7l-4 8h14l-4-8V3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M9 3h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <circle cx="10" cy="15" r="1" fill="currentColor"/>
+      <circle cx="14" cy="13" r="1" fill="currentColor"/>
+    </symbol>
+    <symbol id="ico-mechas" viewBox="0 0 24 24">
+      <path d="M7 4c0 0 1 4 0 8s-1 8 0 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M12 3c0 0 1 5 0 9s-1 8 0 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M17 4c0 0 1 4 0 8s-1 8 0 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="ico-manicure" viewBox="0 0 24 24">
+      <rect x="7" y="10" width="10" height="10" rx="3" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M9 10V7a3 3 0 0 1 6 0v3" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <circle cx="12" cy="15" r="2" fill="currentColor" opacity=".4"/>
+    </symbol>
+    <symbol id="ico-pedicure" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="16" rx="6" ry="4" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M8 13V9a4 4 0 0 1 8 0v4" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M9 9h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" opacity=".4"/>
+    </symbol>
+    <symbol id="ico-nail" viewBox="0 0 24 24">
+      <rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M8 12h8" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M10 18l2 2 2-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M12 15v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="ico-sobr" viewBox="0 0 24 24">
+      <path d="M5 8c2-3 12-3 14 0" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <ellipse cx="12" cy="15" rx="5" ry="3.5" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <circle cx="12" cy="15" r="1.5" fill="currentColor"/>
+    </symbol>
+    <symbol id="ico-cilios2" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="14" rx="7" ry="4" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <circle cx="12" cy="14" r="2" fill="currentColor"/>
+      <path d="M7 10l-1-3M9.5 9l-.5-3M12 8.5V5M14.5 9l.5-3M17 10l1-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="ico-massagem" viewBox="0 0 24 24">
+      <path d="M5 9c0 0 2-1 4 0s5 3 7 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M5 13c0 0 2-1 4 0s5 3 7 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M5 17c0 0 3-1 5 0s5 2 7 1" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="ico-cortemasc" viewBox="0 0 24 24">
+      <path d="M7 3h10v6c0 3.5-2 6-5 6s-5-2.5-5-6V3z" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M9 13l-3 7M15 13l3 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M6 20h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <circle cx="9.5" cy="8" r="1" fill="currentColor"/>
+      <circle cx="14.5" cy="8" r="1" fill="currentColor"/>
+    </symbol>
+    <symbol id="ico-barba2" viewBox="0 0 24 24">
+      <path d="M6 4l1 8c0 4 2 6 5 6s5-2 5-6l1-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M4 4h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M9 14c0 0 1 2 3 2s3-2 3-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <circle cx="9" cy="9" r="1" fill="currentColor"/>
+      <circle cx="15" cy="9" r="1" fill="currentColor"/>
+    </symbol>
+    <symbol id="ico-depil2" viewBox="0 0 24 24">
+      <path d="M5 7h14M7 11h10M9 15h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <rect x="4" y="4" width="16" height="3" rx="1.5" fill="currentColor" opacity=".2"/>
+    </symbol>
+    <symbol id="ico-maquiagem" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="14" rx="6" ry="4" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M8 12l4-8 4 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="12" cy="14" r="2" fill="currentColor" opacity=".5"/>
+    </symbol>
+    <symbol id="ico-podo2" viewBox="0 0 24 24">
+      <path d="M8 4c-2 0-3 2-3 4v4c0 2 1 3 2 3h1l1 7h6l1-7h1c1 0 2-1 2-3V8c0-2-1-4-3-4H8z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+      <circle cx="9.5" cy="7.5" r=".9" fill="currentColor"/>
+      <circle cx="12" cy="7" r=".9" fill="currentColor"/>
+      <circle cx="14.5" cy="7.5" r=".9" fill="currentColor"/>
+    </symbol>
+    <!-- Heart icons -->
+    <symbol id="ico-heart-empty" viewBox="0 0 24 24">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" stroke-width="2" fill="none"/>
+    </symbol>
+    <symbol id="ico-heart-full" viewBox="0 0 24 24">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- DRAWER OVERLAY -->
+<div class="dov" id="dov" onclick="CD()"></div>
+<div class="drw" id="drw">
+  <div class="drw-head">
+    <img src="https://randomuser.me/api/portraits/women/47.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block">
+    <h3>Paula Gomes</h3>
+    <p>paula@email.com</p>
+    <div class="drw-plan">🆓 Plano Básico</div>
+  </div>
+  <div class="drw-body">
+    <div class="d-sec">Principal</div>
+    <div class="d-it on" onclick="G('home')"><div class="d-ico">🏠</div><span class="d-lbl">Home</span></div>
+    <div class="d-it" onclick="G('busca')"><div class="d-ico">🔍</div><span class="d-lbl">Buscar Profissionais</span></div>
+    <div class="d-it" onclick="G('agenda')"><div class="d-ico">📅</div><span class="d-lbl">Meus Agendamentos</span></div>
+    <div class="d-it" onclick="G('favoritos')"><div class="d-ico">♥</div><span class="d-lbl">Favoritos</span></div>
+    <div class="d-it" onclick="G('avals')"><div class="d-ico">⭐</div><span class="d-lbl">Minhas Avaliações</span></div>
+    <div class="d-sec">Conta</div>
+    <div class="d-it" onclick="G('perfil')"><div class="d-ico">👤</div><span class="d-lbl">Meu Perfil</span></div>
+    <div class="d-it" onclick="G('planos')"><div class="d-ico">💜</div><span class="d-lbl">Planos & Benefícios</span></div>
+    <div class="d-it" onclick="G('chat')"><div class="d-ico">💬</div><span class="d-lbl">Mensagens</span></div>
+  </div>
+  <div class="drw-foot">
+    <div class="d-mode" onclick="T('Modo Profissional ativado!')">
+      <div class="d-ico" style="background:rgba(255,255,255,.1)">💼</div>
+      <span>Modo Profissional</span><span style="color:rgba(255,255,255,.4);font-size:18px">›</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ HOME ════════ -->
+<div id="p-home" class="pg on">
+  <div class="ghdr" style="padding-bottom:18px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0 16px;margin-bottom:14px">
+      <div>
+        <p style="color:rgba(255,255,255,.75);font-size:13px;font-weight:700">Olá, Paula! 👋</p>
+        <h1 style="color:#fff;font-size:21px;font-weight:900;margin-top:2px">Que serviço você quer hoje?</h1>
+      </div>
+      <img src="https://randomuser.me/api/portraits/women/47.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block">
+    </div>
+    <div style="padding:0 16px">
+      <div class="sbar" onclick="G('busca')">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input placeholder="Buscar profissional ou serviço..." readonly>
+      </div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div style="padding:16px 16px 8px">
+      <div class="cats" id="c-home">
+        <div class="cat" onclick="openSub('Cabelo','c-home',this)"><div class="cat-ico on"><svg><use href="#ico-cabelo" color="var(--p)"/></svg></div><span>Cabelo</span></div>
+        <div class="cat" onclick="openSub('Unhas','c-home',this)"><div class="cat-ico"><svg><use href="#ico-unhas" color="var(--p)"/></svg></div><span>Unhas</span></div>
+        <div class="cat" onclick="openSub('Maquiagem','c-home',this)"><div class="cat-ico"><svg><use href="#ico-makeup" color="var(--p)"/></svg></div><span>Maquiagem</span></div>
+        <div class="cat" onclick="openSub('Massagem','c-home',this)"><div class="cat-ico"><svg><use href="#ico-massage" color="var(--p)"/></svg></div><span>Massagem</span></div>
+        <div class="cat" onclick="openSub('Barba','c-home',this)"><div class="cat-ico"><svg><use href="#ico-barba" color="var(--p)"/></svg></div><span>Barba</span></div>
+        <div class="cat" onclick="openSub('Cílios','c-home',this)"><div class="cat-ico"><svg><use href="#ico-cilios" color="var(--p)"/></svg></div><span>Cílios</span></div>
+        <div class="cat" onclick="openSub('Podologia','c-home',this)"><div class="cat-ico"><svg><use href="#ico-podo" color="var(--p)"/></svg></div><span>Podologia</span></div>
+        <div class="cat" onclick="openSub('Depilação','c-home',this)"><div class="cat-ico"><svg><use href="#ico-depil" color="var(--p)"/></svg></div><span>Depilação</span></div>
+      </div>
+    </div>
+    <div class="promo" onclick="G('planos')">
+      <div><h3>Plano Premium ⭐</h3><p>Profissionais top + prioridade</p><span class="promo-pill">A partir de R$ 29,90/mês</span></div>
+      <div style="font-size:46px">💜</div>
+    </div>
+    <div class="sec"><h3>Profissionais em Destaque</h3><a onclick="G('busca')">Ver todos</a></div>
+    <!-- LEGENDA -->
+    <div class="legend">
+      <div class="leg-item" style="background:#FFF7E6;color:#92400E"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#D97706"><use href="#ico-elderly"/></svg>Idosos</div>
+      <div class="leg-item" style="background:var(--p3);color:var(--p)"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--p)"><use href="#ico-neuro"/></svg>Neurodivergentes</div>
+      <div class="leg-item" style="background:#FCE7F3;color:#9D174D"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#DB2777"><use href="#ico-atypical"/></svg>Mães Atípicas</div>
+      <div class="leg-item" style="background:#D1FAE5;color:#065F46"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#059669"><use href="#ico-verified"/></svg>Verificada</div>
+    </div>
+    <div class="pcards">
+      <!-- ANA -->
+      <div class="pcard" onclick="G('pro-perfil')">
+        <div class="pcard-img"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"></div>
+        <div class="pcard-b">
+          <div><h4>Ana Hairstylist</h4><div class="sub">Beleza Inclusiva · R$ 80+</div></div>
+          <div><div class="pcard-mid"><div class="star-b">4,8</div></div>
+          <div class="spec-row">
+            <span class="spec-tag elderly"><svg viewBox="0 0 24 24"><use href="#ico-elderly"/></svg>Idosos</span>
+            <span class="spec-tag neuro"><svg viewBox="0 0 24 24"><use href="#ico-neuro"/></svg>Neuro</span>
+            <span class="spec-tag verified"><svg viewBox="0 0 24 24"><use href="#ico-verified"/></svg>Verificada</span>
+          </div></div>
+        </div>
+        <div class="fav on" onclick="event.stopPropagation();this.classList.toggle('on')"><svg viewBox="0 0 24 24" color="var(--red)"><use href="#ico-heart-full" color="var(--red)"/></svg></div>
+      </div>
+      <!-- KAT -->
+      <div class="pcard" onclick="G('pro-perfil')">
+        <div class="pcard-img"><img src="https://randomuser.me/api/portraits/women/26.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"></div>
+        <div class="pcard-b">
+          <div><h4>Kat Visagista</h4><div class="sub">Visagismo · R$ 100+</div></div>
+          <div><div class="pcard-mid"><div class="star-b">4,9</div></div>
+          <div class="spec-row">
+            <span class="spec-tag verified"><svg viewBox="0 0 24 24"><use href="#ico-verified"/></svg>Verificada</span>
+          </div></div>
+        </div>
+        <div class="fav" onclick="event.stopPropagation();this.classList.toggle('on')"><svg viewBox="0 0 24 24" color="var(--p)"><use href="#ico-heart-empty" color="var(--p)"/></svg></div>
+      </div>
+      <!-- LAURA -->
+      <div class="pcard" onclick="G('pro-perfil')">
+        <div class="pcard-img"><img src="https://randomuser.me/api/portraits/women/37.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"></div>
+        <div class="pcard-b">
+          <div><h4>Laura AfroHair</h4><div class="sub">Afro e Natural · R$ 90+</div></div>
+          <div><div class="pcard-mid"><div class="star-b">4,7</div></div>
+          <div class="spec-row">
+            <span class="spec-tag neuro"><svg viewBox="0 0 24 24"><use href="#ico-neuro"/></svg>Neuro</span>
+            <span class="spec-tag atypical"><svg viewBox="0 0 24 24"><use href="#ico-atypical"/></svg>Mãe Atípica</span>
+          </div></div>
+        </div>
+        <div class="fav" onclick="event.stopPropagation();this.classList.toggle('on')"><svg viewBox="0 0 24 24" color="var(--p)"><use href="#ico-heart-empty" color="var(--p)"/></svg></div>
+      </div>
+    </div>
+    <div class="sec"><h3>Populares Agora</h3><a>Ver mapa</a></div>
+    <div class="hscroll">
+      <div class="hcard" onclick="G('pro-perfil')"><div class="hcard-img"><img src="https://randomuser.me/api/portraits/women/12.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"></div><div class="hcard-b"><h4>Silvana Ketlen</h4><p>★ 4,6 · Manicure</p></div></div>
+      <div class="hcard" onclick="G('pro-perfil')"><div class="hcard-img"><img src="https://randomuser.me/api/portraits/women/56.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"></div><div class="hcard-b"><h4>Carla Makeup</h4><p>★ 5,0 · Maquiagem</p></div></div>
+      <div class="hcard" onclick="G('pro-perfil')"><div class="hcard-img"><img src="https://randomuser.me/api/portraits/women/68.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"></div><div class="hcard-b"><h4>Iara Relaxante</h4><p>★ 4,9 · Massagem</p></div></div>
+      <div class="hcard" onclick="G('pro-perfil')"><div class="hcard-img"><img src="https://randomuser.me/api/portraits/women/21.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"></div><div class="hcard-b"><h4>Letícia Nails</h4><p>★ 4,8 · Unhas</p></div></div>
+    </div>
+    <div class="logo">Belune</div>
+  </div>
+  <div class="bnav">
+    <div class="bni on" onclick="G('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></div>
+    <div class="bni" onclick="G('busca')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Buscar</span></div>
+    <div class="bni" onclick="G('agenda')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>Agenda</span></div>
+    <div class="bni" onclick="G('favoritos')"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>Favoritos</span></div>
+    <div class="bni" onclick="OD()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg><span>Menu</span></div>
+  </div>
+</div>
+
+<!-- ════════ BUSCA ════════ -->
+<div id="p-busca" class="pg">
+  <div class="ghdr" style="padding:0 16px 14px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div class="hbtn" onclick="G('home')"><span></span><span></span><span></span></div>
+      <div class="sbar" style="flex:1;box-shadow:none;background:rgba(255,255,255,.18)">
+        <svg viewBox="0 0 24 24" style="stroke:rgba(255,255,255,.7)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="sinput" placeholder="Corte, manicure, massagem..." style="color:#fff;background:transparent">
+        <svg onclick="G('filtro')" viewBox="0 0 24 24" style="stroke:rgba(255,255,255,.8);cursor:pointer"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      </div>
+    </div>
+    <div class="cats" id="c-busca">
+      <div class="cat" onclick="SC(this,'c-busca')"><div class="cat-ico on" style="background:rgba(255,255,255,.9)"><svg><use href="#ico-cabelo" color="var(--p)"/></svg></div><span style="color:rgba(255,255,255,.8)">Todos</span></div>
+      <div class="cat" onclick="SC(this,'c-busca');openSub('Cabelo','c-busca',this)"><div class="cat-ico" style="background:rgba(255,255,255,.15)"><svg><use href="#ico-cabelo" color="white"/></svg></div><span style="color:rgba(255,255,255,.8)">Cabelo</span></div>
+      <div class="cat" onclick="SC(this,'c-busca');openSub('Unhas','c-busca',this)"><div class="cat-ico" style="background:rgba(255,255,255,.15)"><svg><use href="#ico-unhas" color="white"/></svg></div><span style="color:rgba(255,255,255,.8)">Unhas</span></div>
+      <div class="cat" onclick="SC(this,'c-busca');openSub('Maquiagem','c-busca',this)"><div class="cat-ico" style="background:rgba(255,255,255,.15)"><svg><use href="#ico-makeup" color="white"/></svg></div><span style="color:rgba(255,255,255,.8)">Maquiagem</span></div>
+      <div class="cat" onclick="SC(this,'c-busca');openSub('Massagem','c-busca',this)"><div class="cat-ico" style="background:rgba(255,255,255,.15)"><svg><use href="#ico-massage" color="white"/></svg></div><span style="color:rgba(255,255,255,.8)">Massagem</span></div>
+      <div class="cat" onclick="SC(this,'c-busca');openSub('Barba','c-busca',this)"><div class="cat-ico" style="background:rgba(255,255,255,.15)"><svg><use href="#ico-barba" color="white"/></svg></div><span style="color:rgba(255,255,255,.8)">Barba</span></div>
+      <div class="cat" onclick="SC(this,'c-busca');openSub('Cílios','c-busca',this)"><div class="cat-ico" style="background:rgba(255,255,255,.15)"><svg><use href="#ico-cilios" color="white"/></svg></div><span style="color:rgba(255,255,255,.8)">Cílios</span></div>
+      <div class="cat" onclick="SC(this,'c-busca');openSub('Depilação','c-busca',this)"><div class="cat-ico" style="background:rgba(255,255,255,.15)"><svg><use href="#ico-depil" color="white"/></svg></div><span style="color:rgba(255,255,255,.8)">Depilação</span></div>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:8px">
+    <div class="sec"><h3 id="prosCount">7 profissionais encontradas</h3><a onclick="G('filtro')">Filtros</a></div>
+    <div style="padding:6px 16px 4px"><span id="busca-cat-label" style="font-size:13px;font-weight:700;color:var(--soft)">Todas as profissionais</span></div>
+    <div class="legend">
+      <div class="leg-item" style="background:#FFF7E6;color:#92400E"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#D97706"><use href="#ico-elderly"/></svg>Idosos</div>
+      <div class="leg-item" style="background:var(--p3);color:var(--p)"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--p)"><use href="#ico-neuro"/></svg>Neuro</div>
+      <div class="leg-item" style="background:#FCE7F3;color:#9D174D"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#DB2777"><use href="#ico-atypical"/></svg>Mãe Atípica</div>
+      <div class="leg-item" style="background:#D1FAE5;color:#065F46"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#059669"><use href="#ico-verified"/></svg>Verificada</div>
+    </div>
+    <div class="pcards" id="prosList"></div>
+    <div class="logo">Belune</div>
+  </div>
+  <div class="bnav">
+    <div class="bni" onclick="G('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></div>
+    <div class="bni on"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Buscar</span></div>
+    <div class="bni" onclick="G('agenda')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>Agenda</span></div>
+    <div class="bni" onclick="G('favoritos')"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>Favoritos</span></div>
+    <div class="bni" onclick="OD()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg><span>Menu</span></div>
+  </div>
+</div>
+
+<!-- ════════ FILTRO ════════ -->
+<div id="p-filtro" class="pg">
+  <div style="background:var(--w);padding:calc(env(safe-area-inset-top)+14px) 16px 0;flex-shrink:0;box-shadow:var(--sh)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div class="hbtn-d" onclick="G('busca')"><span></span><span></span><span></span></div>
+      <h2 style="font-size:18px;font-weight:900;color:var(--dk)">Filtros de Atendimento</h2>
+    </div>
+  </div>
+  <div class="scroll" style="padding:14px 16px 0">
+    <p style="font-size:12px;font-weight:800;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Especialização</p>
+    <div style="background:var(--w);border-radius:var(--r);overflow:hidden;margin-bottom:14px;box-shadow:var(--sh)">
+      <div class="prow" onclick="this.querySelector('.tgl').classList.toggle('on')"><div class="prow-left"><h4>Atendimento a Idosos</h4><p>Profissionais treinados</p></div><div class="tgl on"></div></div>
+      <div class="prow" onclick="this.querySelector('.tgl').classList.toggle('on')"><div class="prow-left"><h4>Neurodivergentes</h4><p>Ambiente seguro e preparado</p></div><div class="tgl on"></div></div>
+      <div class="prow" onclick="this.querySelector('.tgl').classList.toggle('on')"><div class="prow-left"><h4>Mães Atípicas</h4></div><div class="tgl"></div></div>
+      <div class="prow" onclick="this.querySelector('.tgl').classList.toggle('on')"><div class="prow-left"><h4>Acessibilidade</h4></div><div class="tgl"></div></div>
+    </div>
+    <p style="font-size:12px;font-weight:800;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Avaliação mínima</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="filt-stars">
+      <span onclick="FP(this,'filt-stars')" class="pill pu" style="cursor:pointer;padding:8px 14px;font-size:13px">Todos</span>
+      <span onclick="FP(this,'filt-stars')" class="pill gr" style="cursor:pointer;padding:8px 14px;font-size:13px">4.0 ★</span>
+      <span onclick="FP(this,'filt-stars')" class="pill gr" style="cursor:pointer;padding:8px 14px;font-size:13px">4.5 ★</span>
+      <span onclick="FP(this,'filt-stars')" class="pill gr" style="cursor:pointer;padding:8px 14px;font-size:13px">5.0 ★</span>
+    </div>
+    <button class="btn" onclick="G('busca');T('Filtros aplicados! ✓')">APLICAR FILTROS</button>
+    <div class="logo">Belune</div>
+  </div>
+</div>
+
+<!-- ════════ PERFIL PROFISSIONAL ════════ -->
+<div id="p-pro-perfil" class="pg">
+  <div class="scroll">
+    <div class="prof-cov">
+      <img class="cimg" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Ana Hairstylist">
+      <div class="prof-cov-fb" style="display:none">💇</div>
+      <div class="prof-ov"></div>
+      <div class="prof-back" onclick="G('busca')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+      <div class="prof-fav-btn" onclick="T('Favorito atualizado!')">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#fff"/></svg>
+      </div>
+      <div class="prof-name"><h2>Ana Hairstylist</h2><p>Especialista em Beleza Inclusiva</p></div>
+    </div>
+    <div class="prof-body">
+      <div class="prof-stats">
+        <div class="pstat"><div class="sv">4,8</div><div class="sl">★ Avaliação</div></div>
+        <div class="pstat"><div class="sv">120</div><div class="sl">Avaliações</div></div>
+        <div class="pstat"><div class="sv">5+</div><div class="sl">Anos exp.</div></div>
+      </div>
+      <div class="spec-row" style="margin-bottom:14px">
+        <span class="spec-tag elderly"><svg viewBox="0 0 24 24"><use href="#ico-elderly"/></svg>Idosos</span>
+        <span class="spec-tag neuro"><svg viewBox="0 0 24 24"><use href="#ico-neuro"/></svg>Neurodivergentes</span>
+        <span class="spec-tag verified"><svg viewBox="0 0 24 24"><use href="#ico-verified"/></svg>Verificada</span>
+        <span class="spec-tag" style="background:#DBEAFE;color:#1E40AF"><svg viewBox="0 0 24 24" style="fill:#1E40AF"><use href="#ico-neuro"/></svg>Gravado 🔒</span>
+      </div>
+      <div class="sec" style="padding:0 0 10px"><h3>Serviços</h3></div>
+      <div class="svc-list" id="svc-list">
+        <div class="svc-row on" onclick="SS(this)"><div><h4>Corte</h4><p>~45 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 70</div><div class="svc-radio on"></div></div></div>
+        <div class="svc-row" onclick="SS(this)"><div><h4>Penteado</h4><p>~60 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 80</div><div class="svc-radio"></div></div></div>
+        <div class="svc-row" onclick="SS(this)"><div><h4>Químicas</h4><p>~120 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 150</div><div class="svc-radio"></div></div></div>
+        <div class="svc-row" onclick="SS(this)"><div><h4>Mechas</h4><p>~180 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 200</div><div class="svc-radio"></div></div></div>
+        <div class="svc-row" onclick="SS(this)"><div><h4>Escova</h4><p>~60 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 60</div><div class="svc-radio"></div></div></div>
+        <div class="svc-row" onclick="SS(this)"><div><h4>Hidratação</h4><p>~60 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 90</div><div class="svc-radio"></div></div></div>
+      </div>
+      <div class="sec" style="padding:14px 0 10px"><h3>Avaliações</h3></div>
+      <div class="rev"><div class="rev-h"><img src="https://randomuser.me/api/portraits/women/47.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div><h4>Paula Gomes</h4><p>Corte · 20 Jul</p></div><div class="rev-st">★★★★★</div></div><p>Perfeita! Muito cuidadosa. Já agendei de novo!</p><div class="rev-dt">há 4 dias</div></div>
+      <div class="rev"><div class="rev-h"><img src="https://randomuser.me/api/portraits/women/62.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div><h4>Gisely Silva</h4><p>Hidratação · 15 Jul</p></div><div class="rev-st">★★★★★</div></div><p>Nunca tive um atendimento igual. Entende idosos como ninguém!</p><div class="rev-dt">há 9 dias</div></div>
+      <div style="height:80px"></div>
+    </div>
+  </div>
+  <div style="position:sticky;bottom:0;padding:14px 16px;background:var(--bg);border-top:1px solid var(--line);display:flex;gap:10px">
+    <button class="btn ghost" style="width:52px;flex-shrink:0;padding:0;height:50px;display:flex;align-items:center;justify-content:center" onclick="G('chat')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </button>
+    <button class="btn" onclick="G('booking')">AGENDAR SERVIÇO</button>
+  </div>
+</div>
+
+<!-- ════════ BOOKING ════════ -->
+<div id="p-booking" class="pg">
+  <div class="book-hdr">
+    <div class="back-row"><svg onclick="G('pro-perfil')" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg><h2>Agendar Serviço</h2></div>
+    <div class="book-pro"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div><h4>Ana Hairstylist</h4><p>Especialista em Beleza Inclusiva</p></div></div>
+  </div>
+  <div class="scroll">
+    <div class="book-sec"><div class="book-sec-hdr">1 · Serviço</div>
+      <div class="svc-list" id="book-svc" style="margin:0">
+        <div class="svc-row on" onclick="BS(this)"><div><h4>Corte</h4><p>~45 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 70</div><div class="svc-radio on"></div></div></div>
+        <div class="svc-row" onclick="BS(this)"><div><h4>Penteado</h4><p>~60 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 80</div><div class="svc-radio"></div></div></div>
+        <div class="svc-row" onclick="BS(this)"><div><h4>Químicas</h4><p>~120 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 150</div><div class="svc-radio"></div></div></div>
+        <div class="svc-row" onclick="BS(this)"><div><h4>Mechas</h4><p>~180 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 200</div><div class="svc-radio"></div></div></div>
+        <div class="svc-row" onclick="BS(this)"><div><h4>Escova</h4><p>~60 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 60</div><div class="svc-radio"></div></div></div>
+        <div class="svc-row" onclick="BS(this)"><div><h4>Hidratação</h4><p>~60 min</p></div><div style="display:flex;align-items:center;gap:10px"><div class="svc-price">R$ 90</div><div class="svc-radio"></div></div></div>
+      </div>
+    </div>
+    <div class="book-sec" style="margin-top:10px"><div class="book-sec-hdr">2 · Data</div>
+      <div class="dstrip" id="dstrip">
+        <div class="dp on" onclick="PD(this,'dstrip')"><div class="dn">24</div><div class="dw">SEG</div></div>
+        <div class="dp" onclick="PD(this,'dstrip')"><div class="dn">25</div><div class="dw">TER</div></div>
+        <div class="dp" onclick="PD(this,'dstrip')"><div class="dn">26</div><div class="dw">QUA</div></div>
+        <div class="dp" onclick="PD(this,'dstrip')"><div class="dn">27</div><div class="dw">QUI</div></div>
+        <div class="dp" onclick="PD(this,'dstrip')"><div class="dn">28</div><div class="dw">SEX</div></div>
+        <div class="dp" onclick="PD(this,'dstrip')"><div class="dn">29</div><div class="dw">SÁB</div></div>
+        <div class="dp" onclick="PD(this,'dstrip')"><div class="dn">30</div><div class="dw">DOM</div></div>
+      </div>
+    </div>
+    <div class="book-sec" style="margin-top:10px"><div class="book-sec-hdr">3 · Horário</div>
+      <div class="time-g" id="timeg">
+        <div class="tbtn busy">08:00</div><div class="tbtn busy">09:00</div>
+        <div class="tbtn on" onclick="PT(this,'timeg')">10:00</div>
+        <div class="tbtn" onclick="PT(this,'timeg')">11:00</div>
+        <div class="tbtn busy">13:00</div>
+        <div class="tbtn" onclick="PT(this,'timeg')">14:00</div>
+        <div class="tbtn" onclick="PT(this,'timeg')">15:00</div>
+        <div class="tbtn" onclick="PT(this,'timeg')">16:00</div>
+        <div class="tbtn busy">17:00</div>
+      </div>
+    </div>
+    <div class="book-sec" style="margin-top:10px;margin-bottom:4px"><div class="book-sec-hdr">4 · Pagamento</div>
+      <div class="pay-opts" id="pay">
+        <div class="pay-row on" onclick="PP(this)"><div class="pay-ico">💳</div><h4>Cartão de Crédito</h4></div>
+        <div class="pay-row" onclick="PP(this)"><div class="pay-ico">📱</div><h4>PIX</h4></div>
+        <div class="pay-row" onclick="PP(this)"><div class="pay-ico">💵</div><h4>Dinheiro</h4></div>
+      </div>
+    </div>
+    <div style="background:var(--p3);border-radius:var(--r2);margin:10px 16px;padding:12px 14px;display:flex;gap:9px;align-items:center"><span style="font-size:18px">🔒</span><div><p style="font-size:13px;font-weight:700;color:var(--p)">Atendimento Gravado</p><p style="font-size:11px;color:var(--soft)">Sua segurança é nossa prioridade</p></div></div>
+    <div style="padding:6px 16px 20px">
+      <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);margin-bottom:14px"><span style="font-size:14px;color:var(--soft)">Total</span><strong style="font-size:20px;font-weight:900;color:var(--p)">R$ 70,00</strong></div>
+      <button class="btn" onclick="G('confirmado');T('Agendamento confirmado! ✓')">CONFIRMAR AGENDAMENTO</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ CONFIRMADO ════════ -->
+<div id="p-confirmado" class="pg">
+  <div class="scroll" style="display:flex;flex-direction:column">
+    <div class="confirm-wrap">
+      <div class="confirm-ico">✅</div>
+      <h2 style="font-size:26px;font-weight:900;color:var(--dk);margin-bottom:8px">Agendado!</h2>
+      <p style="color:var(--soft);font-size:14px;line-height:1.6;margin-bottom:22px">Seu serviço foi confirmado.<br>Ana Hairstylist te aguarda!</p>
+      <div class="confirm-card">
+        <div class="crow"><span>Serviço</span><strong>Corte</strong></div>
+        <div class="crow"><span>Profissional</span><strong>Ana Hairstylist</strong></div>
+        <div class="crow"><span>Data</span><strong>Segunda, 24 Jul</strong></div>
+        <div class="crow"><span>Horário</span><strong>10:00</strong></div>
+        <div class="crow"><span>Valor</span><strong style="color:var(--p)">R$ 70,00</strong></div>
+      </div>
+      <button class="btn" onclick="G('agenda')" style="width:100%;margin-bottom:10px">VER MINHA AGENDA</button>
+      <button class="btn ghost" onclick="G('home')" style="width:100%">VOLTAR PARA HOME</button>
+      <div class="logo">Belune</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ AGENDA ════════ -->
+<div id="p-agenda" class="pg">
+  <div style="background:var(--w);padding:calc(env(safe-area-inset-top)+14px) 16px 0;flex-shrink:0;box-shadow:var(--sh)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h2 style="font-size:22px;font-weight:900;color:var(--dk)">Meus Agendamentos</h2>
+      <div class="hbtn-d" onclick="OD()"><span></span><span></span><span></span></div>
+    </div>
+    <div class="tabs"><div class="tab on" onclick="TA(this,0)">Próximos</div><div class="tab" onclick="TA(this,1)">Concluídos</div><div class="tab" onclick="TA(this,2)">Cancelados</div></div>
+  </div>
+  <div class="scroll" style="padding-top:14px" id="agendaContent">
+    <div class="apt-card"><div class="apt-top"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div class="apt-info"><h4>Corte com Ana</h4><p>Ana Hairstylist · R$ 70</p></div><div class="apt-meta"><div class="apt-time">10:00</div><div class="apt-date">05 Ago 2026</div></div></div><div class="apt-footer"><div class="apt-act" onclick="G('booking')">Ver Detalhes</div><div class="apt-act red" onclick="T('Agendamento cancelado')">Cancelar</div></div></div>
+    <div class="apt-card"><div class="apt-top"><img src="https://randomuser.me/api/portraits/women/68.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div class="apt-info"><h4>Massagem Relaxante</h4><p>Iara Relaxante · R$ 100</p></div><div class="apt-meta"><div class="apt-time">14:00</div><div class="apt-date">21 Ago 2026</div></div></div><div class="apt-footer"><div class="apt-act" onclick="G('booking')">Ver Detalhes</div><div class="apt-act red" onclick="T('Agendamento cancelado')">Cancelar</div></div></div>
+    <div class="rate-card"><h3>Avalie seu último serviço</h3><p>Escova com Ana · 20 Jul</p><div class="rs" id="rs"><span onclick="SR(1)">★</span><span onclick="SR(2)">★</span><span onclick="SR(3)">★</span><span onclick="SR(4)">★</span><span onclick="SR(5)">★</span></div><button class="btn" style="margin-top:12px;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);box-shadow:none" onclick="T('Avaliação enviada! 💜')">ENVIAR AVALIAÇÃO</button></div>
+    <div class="logo">Belune</div>
+  </div>
+  <div class="bnav">
+    <div class="bni" onclick="G('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></div>
+    <div class="bni" onclick="G('busca')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Buscar</span></div>
+    <div class="bni on"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>Agenda</span></div>
+    <div class="bni" onclick="G('favoritos')"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>Favoritos</span></div>
+    <div class="bni" onclick="OD()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg><span>Menu</span></div>
+  </div>
+</div>
+
+<!-- ════════ FAVORITOS ════════ -->
+<div id="p-favoritos" class="pg">
+  <div style="background:var(--w);padding:calc(env(safe-area-inset-top)+14px) 16px 14px;flex-shrink:0;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between">
+    <h2 style="font-size:22px;font-weight:900;color:var(--dk)">Favoritos</h2>
+    <div class="hbtn-d" onclick="OD()"><span></span><span></span><span></span></div>
+  </div>
+  <div class="scroll" style="padding-top:14px">
+    <div class="pcards">
+      <div class="pcard" onclick="G('pro-perfil')"><div class="pcard-img"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"></div><div class="pcard-b"><div><h4>Ana Hairstylist</h4><div class="sub">Beleza Inclusiva · R$ 80+</div></div><div><div class="pcard-mid"><div class="star-b">4,8</div></div><div class="spec-row"><span class="spec-tag elderly"><svg viewBox="0 0 24 24"><use href="#ico-elderly"/></svg>Idosos</span><span class="spec-tag neuro"><svg viewBox="0 0 24 24"><use href="#ico-neuro"/></svg>Neuro</span></div></div></div><div class="fav on" onclick="event.stopPropagation();this.classList.toggle('on');T('Removido dos favoritos')"><svg viewBox="0 0 24 24"><use href="#ico-heart-full" color="var(--red)"/></svg></div></div>
+      <div class="pcard" onclick="G('pro-perfil')"><div class="pcard-img"><img src="https://randomuser.me/api/portraits/women/26.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"></div><div class="pcard-b"><div><h4>Kat Visagista</h4><div class="sub">Visagismo · R$ 100+</div></div><div><div class="pcard-mid"><div class="star-b">4,9</div></div><div class="spec-row"><span class="spec-tag verified"><svg viewBox="0 0 24 24"><use href="#ico-verified"/></svg>Verificada</span></div></div></div><div class="fav on" onclick="event.stopPropagation();this.classList.toggle('on');T('Removido dos favoritos')"><svg viewBox="0 0 24 24"><use href="#ico-heart-full" color="var(--red)"/></svg></div></div>
+    </div>
+    <div class="logo">Belune</div>
+  </div>
+  <div class="bnav">
+    <div class="bni" onclick="G('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></div>
+    <div class="bni" onclick="G('busca')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Buscar</span></div>
+    <div class="bni" onclick="G('agenda')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>Agenda</span></div>
+    <div class="bni on"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>Favoritos</span></div>
+    <div class="bni" onclick="OD()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg><span>Menu</span></div>
+  </div>
+</div>
+
+<!-- ════════ AVALIAÇÕES ════════ -->
+<div id="p-avals" class="pg">
+  <div style="background:var(--w);padding:calc(env(safe-area-inset-top)+14px) 16px 0;flex-shrink:0;box-shadow:var(--sh)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <h2 style="font-size:22px;font-weight:900;color:var(--dk)">Avaliações</h2>
+      <div class="hbtn-d" onclick="OD()"><span></span><span></span><span></span></div>
+    </div>
+    <div class="tabs"><div class="tab on" onclick="TAV(this,0)">Que fiz</div><div class="tab" onclick="TAV(this,1)">Que recebi</div></div>
+  </div>
+  <div class="scroll" style="padding:14px 16px" id="avalsContent">
+    <p style="font-size:12px;color:var(--soft);margin-bottom:12px;font-weight:700">Avaliações que você fez para profissionais:</p>
+    <div class="rev"><div class="rev-h"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div><h4>Ana Hairstylist</h4><p>Corte · 20 Jul</p></div><div class="rev-st">★★★★★</div></div><p>Perfeita! Cuidadosa e atenciosa. Já agendei de novo!</p><div class="rev-dt">há 4 dias</div></div>
+    <div class="rev"><div class="rev-h"><img src="https://randomuser.me/api/portraits/women/26.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div><h4>Kat Visagista</h4><p>Visagismo · 10 Jul</p></div><div class="rev-st">★★★★★</div></div><p>Incrível! Entendeu exatamente o que eu queria.</p><div class="rev-dt">há 14 dias</div></div>
+  </div>
+  <div class="bnav">
+    <div class="bni" onclick="G('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></div>
+    <div class="bni" onclick="G('busca')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Buscar</span></div>
+    <div class="bni" onclick="G('agenda')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>Agenda</span></div>
+    <div class="bni" onclick="G('favoritos')"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>Favoritos</span></div>
+    <div class="bni on" onclick="OD()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg><span>Menu</span></div>
+  </div>
+</div>
+
+<!-- ════════ MEU PERFIL ════════ -->
+<div id="p-perfil" class="pg">
+  <div class="cli-head">
+    <div style="display:flex;align-items:center;gap:14px">
+      <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block">
+      <div style="flex:1"><h2 style="color:#fff;font-size:20px;font-weight:900">Paula Gomes</h2><p style="color:rgba(255,255,255,.7);font-size:13px">paula@email.com</p><div style="display:flex;gap:6px;margin-top:6px"><span class="pill" style="background:rgba(255,255,255,.18);color:#fff;font-size:11px">🆓 Plano Básico</span></div></div>
+      <div onclick="T('Editando...')" style="cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:14px">
+    <div class="fld"><label>Nome</label><input type="text" value="Paula Gomes"></div>
+    <div class="fld"><label>Email</label><input type="email" value="paula@email.com"></div>
+    <div class="fld"><label>Telefone</label><input type="tel" value="(11) 99999-0000"></div>
+    <div class="fld"><label>Endereço</label><input type="text" value="Rua das Flores, 215 — Bairro Tumbira"></div>
+    <p style="font-size:12px;font-weight:800;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;padding:4px 16px 12px">✨ Personalizar experiência</p>
+    <div style="background:var(--w);border-radius:var(--r);overflow:hidden;margin:0 16px 14px;box-shadow:var(--sh)">
+      <div class="prow" onclick="this.querySelector('.tgl').classList.toggle('on')"><div class="prow-left"><h4>Sou idoso(a)</h4><p>Profissionais especializados para você</p></div><div class="tgl on"></div></div>
+      <div class="prow" onclick="this.querySelector('.tgl').classList.toggle('on')"><div class="prow-left"><h4>Sou mãe atípica</h4><p>Atendimento adaptado</p></div><div class="tgl"></div></div>
+      <div class="prow" onclick="this.querySelector('.tgl').classList.toggle('on')"><div class="prow-left"><h4>Sou neurodivergente</h4><p>Profissionais treinados</p></div><div class="tgl"></div></div>
+      <div class="prow" onclick="this.querySelector('.tgl').classList.toggle('on')"><div class="prow-left"><h4>Mobilidade reduzida</h4><p>Atendimento acessível</p></div><div class="tgl"></div></div>
+    </div>
+    <div style="background:var(--w);border-radius:var(--r);overflow:hidden;margin:0 16px 14px;box-shadow:var(--sh)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px;border-bottom:1px solid var(--line);cursor:pointer" onclick="G('planos')"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">⭐</span><span style="font-size:14px;font-weight:700;color:var(--dk)">Planos & Benefícios</span></div><span style="color:var(--soft)">›</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px;border-bottom:1px solid var(--line);cursor:pointer" onclick="G('agenda')"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">📋</span><span style="font-size:14px;font-weight:700;color:var(--dk)">Histórico de Serviços</span></div><span style="color:var(--soft)">›</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px;cursor:pointer" onclick="G('chat')"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">💬</span><span style="font-size:14px;font-weight:700;color:var(--dk)">Mensagens</span></div><span style="color:var(--soft)">›</span></div>
+    </div>
+    <div style="padding:0 16px 16px"><button class="btn" onclick="T('Perfil salvo! ✓')">SALVAR PERFIL</button></div>
+    <div class="logo">Belune</div>
+  </div>
+  <div class="bnav">
+    <div class="bni" onclick="G('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></div>
+    <div class="bni" onclick="G('busca')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Buscar</span></div>
+    <div class="bni" onclick="G('agenda')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>Agenda</span></div>
+    <div class="bni" onclick="G('favoritos')"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>Favoritos</span></div>
+    <div class="bni on" onclick="OD()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg><span>Menu</span></div>
+  </div>
+</div>
+
+<!-- ════════ PLANOS ════════ -->
+<div id="p-planos" class="pg">
+  <div style="background:var(--w);padding:calc(env(safe-area-inset-top)+14px) 16px 14px;flex-shrink:0;box-shadow:var(--sh);display:flex;align-items:center;gap:12px">
+    <div class="hbtn-d" onclick="G('perfil')"><span></span><span></span><span></span></div>
+    <h2 style="font-size:20px;font-weight:900;color:var(--dk)">Planos & Benefícios</h2>
+  </div>
+  <div class="scroll" style="padding:14px 0 0">
+    <div class="plan-f"><h3>Básico</h3><div class="pr">Grátis</div><div class="pfeat f">Agendamento de serviços</div><div class="pfeat f">Avaliação de profissionais</div><div class="pfeat f">Histórico completo</div><div class="pfeat f">Chat com profissionais</div><button class="btn ghost" style="margin-top:14px">PLANO ATUAL</button></div>
+    <div class="plan-p"><div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">⭐ Mais popular</div><h3>Premium</h3><div class="pr">R$ 29,90/mês</div><div class="pfeat p">Descontos exclusivos em serviços</div><div class="pfeat p">Prioridade no agendamento</div><div class="pfeat p">Profissionais top garantidos</div><div class="pfeat p">Cashback progressivo</div><div class="pfeat p">Suporte prioritário 24h</div><button class="btn" style="margin-top:14px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);box-shadow:none" onclick="T('Plano Premium ativado! ⭐')">ASSINAR AGORA</button></div>
+    <div style="background:var(--w);border-radius:var(--r);margin:0 16px 14px;padding:16px;box-shadow:var(--sh)"><h3 style="font-size:16px;font-weight:900;color:var(--dk);margin-bottom:8px">🎁 Programa de Fidelidade</h3><p style="font-size:13px;color:var(--soft);margin-bottom:13px">Quanto mais você usa, mais benefícios acumula.</p><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;font-weight:700;color:var(--mid)">Seus pontos</span><strong style="color:var(--p)">350 / 1000 pts</strong></div><div style="background:var(--line);border-radius:50px;height:7px;overflow:hidden;margin-bottom:5px"><div style="width:35%;height:100%;background:linear-gradient(90deg,var(--p),var(--p2));border-radius:50px"></div></div><p style="font-size:12px;color:var(--soft)">Faltam 650 pts para o próximo nível</p></div>
+    <div class="logo">Belune</div>
+  </div>
+</div>
+
+<!-- ════════ CHAT ════════ -->
+<div id="p-chat" class="pg">
+  <div class="chat-hdr">
+    <div class="chat-hdr-inner">
+      <div class="chat-back" onclick="G('pro-perfil')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+      <img src="https://randomuser.me/api/portraits/women/47.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block">
+      <div><p style="color:#fff;font-size:16px;font-weight:800">Ana Hairstylist</p><p style="color:rgba(255,255,255,.65);font-size:12px">🟢 Online agora</p></div>
+    </div>
+  </div>
+  <div class="chat-area" id="chatArea">
+    <div class="bubble r">Olá Paula! Confirmo seu horário para segunda às 10h 😊</div>
+    <div class="btime">10:05</div>
+    <div class="bubble s">Oi Ana! Tudo certo! Obrigada 💜</div>
+    <div class="btime r">10:08</div>
+    <div class="bubble r">Preciso do seu endereço completo</div>
+    <div class="btime">10:09</div>
+    <div class="bubble s">Rua das Flores, 215 — Bairro Tumbira. Interfone 12</div>
+    <div class="btime r">10:10</div>
+    <div class="bubble r">Perfeito! 🌸 O atendimento será gravado para sua segurança!</div>
+    <div class="btime">10:12</div>
+    <div style="text-align:center;background:rgba(109,40,217,.08);border-radius:10px;padding:8px;font-size:11px;color:var(--soft);font-weight:700">🔒 Mensagens seguras</div>
+  </div>
+  <div class="chat-in">
+    <input placeholder="Digite uma mensagem..." id="chatInput">
+    <button class="chat-send" onclick="sendMsg()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+  </div>
+</div>
+
+<!-- SUBCAT SHEET -->
+<div class="subcat-bg" id="subcatBg" onclick="if(event.target.id==='subcatBg')closeSub()">
+  <div class="subcat-sheet">
+    <div class="subcat-hdr">
+      <h3 id="subcatTitle">Cabelo</h3>
+      <div class="subcat-close" onclick="closeSub()">✕</div>
+    </div>
+    <div class="subcat-grid" id="subcatGrid"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+const PROS = {
+  'Cabelo': [
+    {name:'Ana Hairstylist', sub:'Beleza Inclusiva', price:'R$ 80+', rating:'4,8', img:'https://randomuser.me/api/portraits/women/44.jpg', specs:['elderly','neuro','verified']},
+    {name:'Laura AfroHair', sub:'Afro e Natural', price:'R$ 90+', rating:'4,7', img:'https://randomuser.me/api/portraits/women/37.jpg', specs:['neuro','atypical']},
+    {name:'Silvana Ketlen', sub:'Corte e Coloração', price:'R$ 70+', rating:'4,6', img:'https://randomuser.me/api/portraits/women/12.jpg', specs:['elderly']},
+    {name:'Renata Color', sub:'Coloração e Mechas', price:'R$ 120+', rating:'4,9', img:'https://randomuser.me/api/portraits/women/33.jpg', specs:['verified']},
+  ],
+  'Unhas': [
+    {name:'Letícia Nails', sub:'Manicure & Nail Art', price:'R$ 60+', rating:'4,8', img:'https://randomuser.me/api/portraits/women/21.jpg', specs:['verified']},
+    {name:'Bianca Nails', sub:'Nail Designer', price:'R$ 80+', rating:'4,9', img:'https://randomuser.me/api/portraits/women/54.jpg', specs:['elderly','verified']},
+    {name:'Fernanda Podo', sub:'Manicure & Podologia', price:'R$ 70+', rating:'4,7', img:'https://randomuser.me/api/portraits/women/29.jpg', specs:['elderly']},
+  ],
+  'Maquiagem': [
+    {name:'Carla Makeup', sub:'Maquiagem Artística', price:'R$ 120+', rating:'5,0', img:'https://randomuser.me/api/portraits/women/56.jpg', specs:['verified']},
+    {name:'Kat Visagista', sub:'Visagismo', price:'R$ 100+', rating:'4,9', img:'https://randomuser.me/api/portraits/women/26.jpg', specs:['verified']},
+    {name:'Juliana Beauty', sub:'Maquiagem & Sobrancelha', price:'R$ 90+', rating:'4,8', img:'https://randomuser.me/api/portraits/women/48.jpg', specs:['atypical']},
+  ],
+  'Massagem': [
+    {name:'Iara Relaxante', sub:'Massagem Terapêutica', price:'R$ 100+', rating:'4,9', img:'https://randomuser.me/api/portraits/women/68.jpg', specs:['elderly','verified']},
+    {name:'Priscila Zen', sub:'Massagem & Bem-estar', price:'R$ 90+', rating:'4,8', img:'https://randomuser.me/api/portraits/women/41.jpg', specs:['neuro']},
+  ],
+  'Barba': [
+    {name:'Marcos Barber', sub:'Barbearia Premium', price:'R$ 50+', rating:'4,9', img:'https://randomuser.me/api/portraits/men/32.jpg', specs:['verified']},
+    {name:'Bruno Barber', sub:'Corte & Barba', price:'R$ 60+', rating:'4,7', img:'https://randomuser.me/api/portraits/men/45.jpg', specs:[]},
+  ],
+  'Cilios': [
+    {name:'Kat Visagista', sub:'Extensão de Cílios', price:'R$ 160+', rating:'4,9', img:'https://randomuser.me/api/portraits/women/26.jpg', specs:['verified']},
+    {name:'Juliana Beauty', sub:'Cílios & Sobrancelha', price:'R$ 120+', rating:'4,8', img:'https://randomuser.me/api/portraits/women/48.jpg', specs:[]},
+  ],
+  'Podologia': [
+    {name:'Fernanda Podo', sub:'Podologia Clínica', price:'R$ 80+', rating:'4,7', img:'https://randomuser.me/api/portraits/women/29.jpg', specs:['elderly']},
+    {name:'Letícia Nails', sub:'Manicure & Podologia', price:'R$ 60+', rating:'4,8', img:'https://randomuser.me/api/portraits/women/21.jpg', specs:['verified']},
+  ],
+  'Depilacao': [
+    {name:'Camila Depil', sub:'Depilação a Cera', price:'R$ 70+', rating:'4,8', img:'https://randomuser.me/api/portraits/women/60.jpg', specs:['verified']},
+    {name:'Priscila Zen', sub:'Depilação & Bem-estar', price:'R$ 80+', rating:'4,7', img:'https://randomuser.me/api/portraits/women/41.jpg', specs:[]},
+  ],
+  'Todos': [
+    {name:'Ana Hairstylist', sub:'Beleza Inclusiva', price:'R$ 80+', rating:'4,8', img:'https://randomuser.me/api/portraits/women/44.jpg', specs:['elderly','neuro','verified']},
+    {name:'Kat Visagista', sub:'Visagismo', price:'R$ 100+', rating:'4,9', img:'https://randomuser.me/api/portraits/women/26.jpg', specs:['verified']},
+    {name:'Laura AfroHair', sub:'Afro e Natural', price:'R$ 90+', rating:'4,7', img:'https://randomuser.me/api/portraits/women/37.jpg', specs:['neuro','atypical']},
+    {name:'Letícia Nails', sub:'Manicure & Nail Art', price:'R$ 60+', rating:'4,8', img:'https://randomuser.me/api/portraits/women/21.jpg', specs:['verified']},
+    {name:'Carla Makeup', sub:'Maquiagem Artística', price:'R$ 120+', rating:'5,0', img:'https://randomuser.me/api/portraits/women/56.jpg', specs:['verified']},
+    {name:'Iara Relaxante', sub:'Massagem Terapêutica', price:'R$ 100+', rating:'4,9', img:'https://randomuser.me/api/portraits/women/68.jpg', specs:['elderly','verified']},
+    {name:'Silvana Ketlen', sub:'Corte e Coloração', price:'R$ 70+', rating:'4,6', img:'https://randomuser.me/api/portraits/women/12.jpg', specs:['elderly']},
+  ]
+};
+const SPEC_CFG = {
+  elderly: {label:'Idosos', icon:'ico-elderly', bg:'#FFF7E6', color:'#92400E'},
+  neuro:   {label:'Neuro', icon:'ico-neuro', bg:'#EDE9FE', color:'#6D28D9'},
+  atypical:{label:'Mae Atipica', icon:'ico-atypical', bg:'#FCE7F3', color:'#9D174D'},
+  verified:{label:'Verificada', icon:'ico-verified', bg:'#D1FAE5', color:'#065F46'},
+};
+function renderPros(cat){
+  const key = cat.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s/g,'');
+  const list = PROS[key] || PROS[cat] || PROS['Todos'];
+  const el = document.getElementById('prosList');
+  if(!el) return;
+  document.getElementById('prosCount').textContent = list.length + ' profissionais encontradas';
+  el.innerHTML = list.map(p=>{
+    const tags = p.specs.map(s=>{
+      const c=SPEC_CFG[s];
+      return '<span class="spec-tag '+s+'" style="background:'+c.bg+';color:'+c.color+'"><svg viewBox="0 0 24 24"><use href="#'+c.icon+'"/></svg>'+c.label+'</span>';
+    }).join('');
+    return '<div class="pcard" onclick="G(\'pro-perfil\')"><div class="pcard-img"><img src="'+p.img+'" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"></div><div class="pcard-b"><div><h4>'+p.name+'</h4><div class="sub">'+p.sub+' · '+p.price+'</div></div><div><div class="pcard-mid"><div class="star-b">'+p.rating+'</div></div><div class="spec-row">'+tags+'</div></div></div><div class="fav" onclick="event.stopPropagation();this.classList.toggle(\'on\');T(\'Favorito atualizado!\')"><svg viewBox="0 0 24 24"><use href="#ico-heart-empty" color="var(--p)"/></svg></div></div>';
+  }).join('');
+}
+window.addEventListener('error',function(e){if(e.message==='Script error.')e.preventDefault();},true);
+
+// ── SUBCATEGORY DATA (icon-id, name, desc) ──
+const SUBCATS = {
+  'Cabelo': [
+    ['ico-corte','Corte','~45 min · R$ 70'],
+    ['ico-penteado','Penteado','~60 min · R$ 80'],
+    ['ico-quimica','Químicas','~120 min · R$ 150'],
+    ['ico-mechas','Mechas','~180 min · R$ 200'],
+    ['ico-escova','Escova','~60 min · R$ 60'],
+    ['ico-hidrat','Hidratação','~60 min · R$ 90'],
+  ],
+  'Unhas': [
+    ['ico-manicure','Manicure','~45 min · R$ 40'],
+    ['ico-pedicure','Pedicure','~60 min · R$ 50'],
+    ['ico-nail','Nail Designer','~90 min · R$ 120'],
+    ['ico-podo2','Podologia','~60 min · R$ 80'],
+  ],
+  'Maquiagem': [
+    ['ico-maquiagem','Maquiagem','~60 min · R$ 120'],
+    ['ico-sobr','Designer Sobrancelha','~30 min · R$ 40'],
+    ['ico-cilios2','Extensão de Cílios','~120 min · R$ 160'],
+  ],
+  'Massagem': [
+    ['ico-massagem','Massagem Relaxante','~60 min · R$ 100'],
+    ['ico-massagem','Massagem Desportiva','~60 min · R$ 120'],
+  ],
+  'Barba': [
+    ['ico-cortemasc','Corte Masculino','~30 min · R$ 50'],
+    ['ico-barba2','Barba','~30 min · R$ 40'],
+  ],
+  'Cílios': [
+    ['ico-cilios2','Extensão de Cílios','~120 min · R$ 160'],
+    ['ico-sobr','Designer Sobrancelha','~30 min · R$ 40'],
+  ],
+  'Podologia': [
+    ['ico-podo2','Podologia','~60 min · R$ 80'],
+    ['ico-pedicure','Pedicure','~60 min · R$ 50'],
+  ],
+  'Depilação': [
+    ['ico-depil2','Depilação','~60 min · R$ 70'],
+  ],
+};
+
+function G(p){
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+  const el=document.getElementById('p-'+p);
+  if(el){el.classList.add('on');el.querySelectorAll('.scroll,.chat-area').forEach(s=>s.scrollTop=0)}
+  document.querySelectorAll('.d-it').forEach(i=>i.classList.remove('on'));
+  const di=document.querySelector(`.d-it[onclick*="'${p}'"]`);
+  if(di)di.classList.add('on');
+  CD();
+}
+function OD(){document.getElementById('drw').classList.add('on');document.getElementById('dov').classList.add('on')}
+function CD(){document.getElementById('drw').classList.remove('on');document.getElementById('dov').classList.remove('on')}
+function SC(el,id){
+  document.getElementById(id).querySelectorAll('.cat-ico').forEach(c=>c.classList.remove('on'));
+  el.querySelector('.cat-ico').classList.add('on');
+}
+function PD(el,id){document.getElementById(id).querySelectorAll('.dp').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
+function PT(el,id){if(el.classList.contains('busy'))return;document.getElementById(id).querySelectorAll('.tbtn').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
+function PP(el){document.getElementById('pay').querySelectorAll('.pay-row').forEach(r=>r.classList.remove('on'));el.classList.add('on')}
+function SS(el){document.getElementById('svc-list').querySelectorAll('.svc-row').forEach(r=>{r.classList.remove('on');r.querySelector('.svc-radio').classList.remove('on')});el.classList.add('on');el.querySelector('.svc-radio').classList.add('on')}
+function BS(el){document.getElementById('book-svc').querySelectorAll('.svc-row').forEach(r=>{r.classList.remove('on');r.querySelector('.svc-radio').classList.remove('on')});el.classList.add('on');el.querySelector('.svc-radio').classList.add('on')}
+function FP(el,id){document.getElementById(id).querySelectorAll('span').forEach(s=>{s.className='pill gr';s.style.cssText='cursor:pointer;padding:8px 14px;font-size:13px'});el.className='pill pu';el.style.cssText='cursor:pointer;padding:8px 14px;font-size:13px'}
+function SR(n){document.querySelectorAll('#rs span').forEach((s,i)=>s.classList.toggle('on',i<n))}
+function TA(el,idx){
+  el.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
+  const c=document.getElementById('agendaContent');
+  if(idx===0)c.innerHTML=`<div class="apt-card"><div class="apt-top"><img src="https://randomuser.me/api/portraits/women/47.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div class="apt-info"><h4>Corte com Ana</h4><p>Ana Hairstylist · R$ 70</p></div><div class="apt-meta"><div class="apt-time">10:00</div><div class="apt-date">05 Ago 2026</div></div></div><div class="apt-footer"><div class="apt-act" onclick="G('booking')">Ver Detalhes</div><div class="apt-act red" onclick="T('Cancelado')">Cancelar</div></div></div><div class="apt-card"><div class="apt-top"><img src="https://randomuser.me/api/portraits/women/47.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div class="apt-info"><h4>Massagem Relaxante</h4><p>Iara Relaxante · R$ 100</p></div><div class="apt-meta"><div class="apt-time">14:00</div><div class="apt-date">21 Ago 2026</div></div></div><div class="apt-footer"><div class="apt-act" onclick="G('booking')">Ver Detalhes</div><div class="apt-act red" onclick="T('Cancelado')">Cancelar</div></div></div><div class="rate-card"><h3>Avalie seu último serviço</h3><p>Escova com Ana · 20 Jul</p><div class="rs" id="rs"><span onclick="SR(1)">★</span><span onclick="SR(2)">★</span><span onclick="SR(3)">★</span><span onclick="SR(4)">★</span><span onclick="SR(5)">★</span></div><button class="btn" style="margin-top:12px;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);box-shadow:none" onclick="T('Avaliação enviada!')">ENVIAR AVALIAÇÃO</button></div><div class="logo">Belune</div>`;
+  else if(idx===1)c.innerHTML=`<div class="apt-card"><div class="apt-top"><img src="https://randomuser.me/api/portraits/women/47.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div class="apt-info"><h4>Corte</h4><p>Ana Hairstylist · R$ 70</p></div><div class="apt-meta"><div class="apt-time"><span class="pill g">✓</span></div><div class="apt-date">20 Jul 2026</div></div></div></div><div class="logo">Belune</div>`;
+  else c.innerHTML=`<div style="text-align:center;padding:40px 20px"><div style="font-size:48px;margin-bottom:12px">📭</div><p style="font-size:14px;color:var(--soft);font-weight:600">Nenhum cancelamento</p></div><div class="logo">Belune</div>`;
+}
+function TAV(el,idx){
+  el.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
+  const c=document.getElementById('avalsContent');
+  if(idx===0)c.innerHTML=`<p style="font-size:12px;color:var(--soft);margin-bottom:12px;font-weight:700">Avaliações que você fez:</p><div class="rev"><div class="rev-h"><img src="https://randomuser.me/api/portraits/women/47.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div><h4>Ana Hairstylist</h4><p>Corte · 20 Jul</p></div><div class="rev-st">★★★★★</div></div><p>Perfeita! Cuidadosa e atenciosa.</p><div class="rev-dt">há 4 dias</div></div><div class="rev"><div class="rev-h"><img src="https://randomuser.me/api/portraits/women/47.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div><h4>Kat Visagista</h4><p>Visagismo · 10 Jul</p></div><div class="rev-st">★★★★★</div></div><p>Incrível! Entendeu exatamente o que eu queria.</p><div class="rev-dt">há 14 dias</div></div>`;
+  else c.innerHTML=`<p style="font-size:12px;color:var(--soft);margin-bottom:12px;font-weight:700">Avaliações que profissionais fizeram de você:</p><div class="rev"><div class="rev-h"><img src="https://randomuser.me/api/portraits/women/47.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"><div><h4>Ana Hairstylist</h4><p>Corte · 20 Jul</p></div><div class="rev-st">★★★★★</div></div><p>Cliente pontual e ambiente organizado. Excelente!</p><div class="rev-dt">há 4 dias</div></div>`;
+}
+// ── SUBCAT SHEET ──
+function openSub(cat,catId,el){
+  if(catId){document.getElementById(catId).querySelectorAll('.cat-ico').forEach(c=>c.classList.remove('on'));if(el)el.querySelector('.cat-ico').classList.add('on')}
+  const items=SUBCATS[cat];
+  if(!items){
+    G('busca'); renderPros(cat);
+    const lb=document.getElementById('busca-cat-label'); if(lb) lb.textContent=cat;
+    return;
+  }
+  document.getElementById('subcatTitle').textContent=cat;
+  document.getElementById('subcatGrid').innerHTML=items.map(([ico,name,desc])=>
+    '<div class="si" onclick="selectSub(\''+name+'\',\''+cat+'\',this)"><div class="si-ico"><svg viewBox="0 0 24 24"><use href="#'+ico+'" color="var(--p)"/></svg></div><h4>'+name+'</h4><p>'+desc+'</p></div>'
+  ).join('');
+  document.getElementById('subcatBg').classList.add('on');
+}
+function closeSub(){document.getElementById('subcatBg').classList.remove('on')}
+function selectSub(name,cat,el){
+  document.querySelectorAll('.si').forEach(i=>i.classList.remove('on'));el.classList.add('on');
+  setTimeout(()=>{
+    closeSub(); G('busca'); renderPros(cat);
+    const lb=document.getElementById('busca-cat-label'); if(lb) lb.textContent=cat+' › '+name;
+    const si=document.getElementById('sinput'); if(si) si.value=name;
+    T('Buscando: '+name);
+  },280);
+}
+let tt;
+function T(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',2800)}
+function sendMsg(){
+  const inp=document.getElementById('chatInput');const val=inp.value.trim();if(!val)return;
+  const area=document.getElementById('chatArea');
+  const b=document.createElement('div');b.className='bubble s';b.textContent=val;
+  const t=document.createElement('div');t.className='btime r';t.textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  area.appendChild(b);area.appendChild(t);inp.value='';area.scrollTop=area.scrollHeight;
+  setTimeout(()=>{
+    const r=document.createElement('div');r.className='bubble r';r.textContent='Entendido! 💜';
+    const rt=document.createElement('div');rt.className='btime';rt.textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    area.appendChild(r);area.appendChild(rt);area.scrollTop=area.scrollHeight;
+  },1200);
+}
+document.getElementById('chatInput').addEventListener('keypress',e=>{if(e.key==='Enter')sendMsg()});
+
+document.addEventListener('DOMContentLoaded',function(){renderPros('Todos');});</script>
+</body>
+</html>
